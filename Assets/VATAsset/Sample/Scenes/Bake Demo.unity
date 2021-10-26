@@ -222,7 +222,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 42bcce0ad5e4440f3a247845e7cadb42, type: 3}
       propertyPath: m_Name
-      value: TestMan
+      value: StickMen
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 42bcce0ad5e4440f3a247845e7cadb42, type: 3}
       propertyPath: m_IsActive
