@@ -251,7 +251,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 6a6e5a035e1ee4b848e1d5ee9c91c597, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  _shader: {fileID: -6465566751694194690, guid: 44eb5a9ca77c44c308c3de0be8364f5c, type: 3}
+  _shader: {fileID: -6465566751694194690, guid: 5403781821da54a8bb9c98b2dfc2df88, type: 3}
 --- !u!1 &665423899
 GameObject:
   m_ObjectHideFlags: 0

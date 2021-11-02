@@ -120,6 +120,13 @@ public class BakeToAnimationTexture : MonoBehaviour
             material.SetTexture("_NormalCache", newNormalTex);
             material.SetTexture("_TangentCache", newTangentTex);
 
+            material.enableInstancing = true;
+
+            if (clip.length > 0)
+            {
+                material.SetFloat("_AnimationSpeed" , 1f / clip.length);
+            }
+
 
             _materials.Add(material);
             SaveMaterial(material, _materialPath);
