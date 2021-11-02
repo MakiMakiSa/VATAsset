@@ -13,31 +13,40 @@ public class BakeToAnimationTexture : MonoBehaviour
     private Animator animator;
     private List<SkinnedMeshRenderer> smrs = new List<SkinnedMeshRenderer>();
 
-    private string basePath = "VATExportData";
-    private string absolutePath => "Assets/" + basePath;
+    private string thisPath = "VATAsset";
+    private string dataPath = "ExportData";
+
+    private string ThisPath => "Assets/" + thisPath;
+    private string DataPath => "Assets/" + thisPath + "/" + dataPath;
 
     private string _texturePath = "";
     private string _materialPath = "";
     private string _meshPath = "";
     private string _prefabPath = "";
-    
+
 
     [SerializeField] private Shader _shader;
-    [SerializeField] private float _boudScale = 15f;
-    
+    private Bounds _bounds;
+
     List<Material> _materials = new List<Material>();
+
 
     private void Start()
     {
         transform.position = Vector3.zero;
         transform.rotation = Quaternion.identity;
 
-        if (!System.IO.Directory.Exists(absolutePath))
+        if (!System.IO.Directory.Exists(ThisPath))
         {
-            AssetDatabase.CreateFolder("Assets", basePath);
+            AssetDatabase.CreateFolder("Assets", thisPath);
         }
 
-        _prefabPath = AssetDatabase.CreateFolder(absolutePath, transform.name);
+        if (!System.IO.Directory.Exists(DataPath))
+        {
+            AssetDatabase.CreateFolder(ThisPath, dataPath);
+        }
+
+        _prefabPath = AssetDatabase.CreateFolder(DataPath, transform.name);
         _materialPath = AssetDatabase.CreateFolder(AssetDatabase.GUIDToAssetPath(_prefabPath), "Materials");
         _texturePath = AssetDatabase.CreateFolder(AssetDatabase.GUIDToAssetPath(_prefabPath), "Textures");
         _meshPath = AssetDatabase.CreateFolder(AssetDatabase.GUIDToAssetPath(_prefabPath), "Mesh");
@@ -45,6 +54,7 @@ public class BakeToAnimationTexture : MonoBehaviour
 
         StartCoroutine("Init");
     }
+
 
     IEnumerator Init()
     {
@@ -109,7 +119,7 @@ public class BakeToAnimationTexture : MonoBehaviour
             material.SetTexture("_PointCache", newPointTex);
             material.SetTexture("_NormalCache", newNormalTex);
             material.SetTexture("_TangentCache", newTangentTex);
-            
+
 
             _materials.Add(material);
             SaveMaterial(material, _materialPath);
@@ -124,17 +134,20 @@ public class BakeToAnimationTexture : MonoBehaviour
         //プレファブ
         var controller = newObj.AddComponent<VATController>();
         controller.Init(_materials);
-        PrefabUtility.CreatePrefab(Path.Combine(AssetDatabase.GUIDToAssetPath(_prefabPath), newObj.name + ".prefab").Replace("\\", "/"), newObj);
+        PrefabUtility.CreatePrefab(
+            Path.Combine(AssetDatabase.GUIDToAssetPath(_prefabPath), newObj.name + ".prefab").Replace("\\", "/"),
+            newObj);
 
 
         AssetDatabase.SaveAssets();
         AssetDatabase.Refresh();
-        
-        
+
+
         //動作確認
         transform.gameObject.SetActive(false);
         newObj.AddComponent<AutoAnimationChange>();
     }
+
 
     private void SaveTextureDatas(Texture2D newTexture, Color[] pBuffer, Texture2D newNormal, Color[] nBuffer,
         Texture2D newTangent, Color[] tBuffer)
@@ -152,6 +165,7 @@ public class BakeToAnimationTexture : MonoBehaviour
         SaveTexture(newNormal, _texturePath);
         SaveTexture(newTangent, _texturePath);
     }
+
 
     /// <summary>
     /// 統合メッシュオブジェクトの作成
@@ -239,8 +253,9 @@ public class BakeToAnimationTexture : MonoBehaviour
         }
         //        mesh.triangles = triangles.ToArray();
 
-        mesh.RecalculateBounds();
-        mesh.bounds = new Bounds(Vector3.zero, Vector3.one*_boundScale);
+        _bounds.center = Vector3.zero;
+        _bounds.size *= 2f;
+        mesh.bounds = _bounds;
         //メッシュフィルター設定
         var newMF = obj.AddComponent<MeshFilter>();
         newMF.sharedMesh = mesh;
@@ -292,10 +307,12 @@ public class BakeToAnimationTexture : MonoBehaviour
 
     static public int currentBakeCount = 0;
 
+
     static void ResetBakeCount()
     {
         currentBakeCount = 0;
     }
+
 
     void BakeCurrentAnimationForBuffer(int flameNum, Mesh mesh, ref Color[] buffer, ref Color[] nBuffer,
         ref Color[] tBuffer, Texture2D tex)
@@ -308,12 +325,18 @@ public class BakeToAnimationTexture : MonoBehaviour
         for (int u = 0; u < v.Length; u++) //UVへの格納なので変数はu
         {
             //格納
+            var bx  = Mathf.Max(_bounds.size.x,Mathf.Abs(v[u].x));
+            var by  = Mathf.Max(_bounds.size.y,Mathf.Abs(v[u].y));
+            var bz  = Mathf.Max(_bounds.size.z,Mathf.Abs(v[u].z));
+            _bounds.size = new Vector3(bx, by, bz);
+            
             buffer[currentBakeCount + (tex.width * flameNum)] = new Color(v[u].x, v[u].y, v[u].z, 1f);
             nBuffer[currentBakeCount + (tex.width * flameNum)] = new Color(n[u].x, n[u].y, n[u].z, 1f);
             tBuffer[currentBakeCount + (tex.width * flameNum)] = new Color(t[u].x, t[u].y, t[u].z, t[u].w);
             currentBakeCount++;
         }
     }
+
 
     int CheckFileCount(string filePath, string typeCode)
     {
@@ -326,12 +349,13 @@ public class BakeToAnimationTexture : MonoBehaviour
         return fileNum;
     }
 
+
     static void SaveMaterial(Material material, string path)
     {
-
         AssetDatabase.CreateAsset(material,
             Path.Combine(AssetDatabase.GUIDToAssetPath(path), material.name + ".asset"));
     }
+
 
     static void SaveTexture(Texture2D tex, string path)
     {
