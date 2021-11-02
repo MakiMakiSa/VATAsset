@@ -23,6 +23,8 @@ public class BakeToAnimationTexture : MonoBehaviour
     
 
     [SerializeField] private Shader _shader;
+    [SerializeField] private float _boudScale = 15f;
+    
     List<Material> _materials = new List<Material>();
 
     private void Start()
@@ -107,6 +109,7 @@ public class BakeToAnimationTexture : MonoBehaviour
             material.SetTexture("_PointCache", newPointTex);
             material.SetTexture("_NormalCache", newNormalTex);
             material.SetTexture("_TangentCache", newTangentTex);
+            
 
             _materials.Add(material);
             SaveMaterial(material, _materialPath);
@@ -236,6 +239,8 @@ public class BakeToAnimationTexture : MonoBehaviour
         }
         //        mesh.triangles = triangles.ToArray();
 
+        mesh.RecalculateBounds();
+        mesh.bounds = new Bounds(Vector3.zero, Vector3.one*_boundScale);
         //メッシュフィルター設定
         var newMF = obj.AddComponent<MeshFilter>();
         newMF.sharedMesh = mesh;
